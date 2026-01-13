@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { createNoteSchema } from '@/lib/validations/contract';
 import { Status, Action } from '@prisma/client';
 
+export const runtime = 'edge';
+
 // 키워드 자동 추출
 function extractTags(content: string): string[] {
   const keywords = [

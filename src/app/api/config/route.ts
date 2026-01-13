@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
+export const runtime = 'edge';
+
 // GET: 설정값 조회
 export async function GET(request: NextRequest) {
   try {
