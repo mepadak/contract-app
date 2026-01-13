@@ -10,7 +10,7 @@ Contract Manager Mobile - 국가기관 계약담당관을 위한 모바일 우�
 
 - **프레임워크**: Next.js 15 (App Router, React Server Components)
 - **UI**: React 19, Tailwind CSS 4, Lucide React 아이콘
-- **AI**: Vercel AI SDK 4.x + Google Gemini (gemini-1.5-flash)
+- **AI**: Vercel AI SDK 6.x + Google Gemini (gemini-1.5-flash)
 - **데이터베이스**: Vercel Postgres + Prisma 6.x (Edge 호환: @prisma/adapter-neon)
 - **런타임**: 모든 API 라우트에 Vercel Edge Runtime 사용
 - **언어**: TypeScript 5.x

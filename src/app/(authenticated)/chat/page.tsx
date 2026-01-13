@@ -4,19 +4,25 @@ import { useChat } from '@ai-sdk/react';
 import { ChatContainer } from '@/components/chat/chat-container';
 import { ChatInput } from '@/components/chat/chat-input';
 
+// AI SDK 6.x UIMessage에서 텍스트 추출 헬퍼
+function extractTextContent(parts: Array<{ type: string; text?: string }>): string {
+  return parts
+    .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+    .map((part) => part.text)
+    .join('');
+}
+
 export default function ChatPage() {
-  const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
-  });
+  // AI SDK 6.x: api 옵션 제거 (기본값 '/api/chat' 사용)
+  const { messages, sendMessage, status } = useChat();
 
   const isLoading = status === 'streaming' || status === 'submitted';
 
-  // 메시지 변환: Vercel AI SDK 형식 -> 컴포넌트 형식
+  // 메시지 변환: AI SDK 6.x UIMessage → 컴포넌트 형식
   const formattedMessages = messages.map((m) => ({
     id: m.id,
     role: m.role as 'user' | 'assistant',
-    content: m.content,
-    createdAt: m.createdAt,
+    content: extractTextContent(m.parts),
   }));
 
   // 메시지 전송 핸들러
