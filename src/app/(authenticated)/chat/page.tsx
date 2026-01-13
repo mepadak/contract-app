@@ -26,9 +26,10 @@ export default function ChatPage() {
   }));
 
   // 메시지 전송 핸들러
+  // AI SDK 6.x: sendMessage({ text: string }) 형식 사용
   const handleSend = async (message: string) => {
     if (!message.trim()) return;
-    await sendMessage(message);
+    await sendMessage({ text: message });
   };
 
   return (
