@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { streamText, stepCountIs } from 'ai';
 import { google } from '@ai-sdk/google';
 import { systemPrompt } from '@/lib/ai/system-prompt';
 import { contractTools } from '@/lib/ai/tools';
@@ -17,10 +17,12 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: recentMessages,
       tools: contractTools,
-      maxSteps: 5, // 최대 5번의 tool 호출 허용
+      // AI SDK 6.x: maxSteps → stopWhen
+      stopWhen: stepCountIs(5),
     });
 
-    return result.toDataStreamResponse();
+    // AI SDK 6.x: toDataStreamResponse → toUIMessageStreamResponse
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error('Chat API error:', error);
     return new Response(
