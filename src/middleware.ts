@@ -16,15 +16,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 세션 쿠키 확인
-  const session = request.cookies.get('session');
-
-  if (!session) {
-    // 세션 없으면 로그인 페이지로 리다이렉트
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
+  // [임시 비활성화] 인증 체크 - 테스트용
+  // const session = request.cookies.get('session');
+  // if (!session) {
+  //   const url = request.nextUrl.clone();
+  //   url.pathname = '/login';
+  //   return NextResponse.redirect(url);
+  // }
 
   return NextResponse.next();
 }
