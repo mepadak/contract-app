@@ -103,7 +103,7 @@ export const contractTools = {
   // 계약 생성
   createContract: tool({
     description: '새로운 계약을 생성합니다. 계약명, 종류, 방법은 필수입니다.',
-    parameters: z.object({
+    inputSchema: z.object({
       title: z.string().describe('계약명'),
       category: z.string().describe('계약 종류 (물품, 용역, 공사 등)'),
       method: z.string().describe('계약 방법 (일반경쟁, 수의계약 등)'),
@@ -117,7 +117,7 @@ export const contractTools = {
         const mappedCategory = mapCategory(category);
         const mappedMethod = mapMethod(method);
         const initialStage = getInitialStage(mappedMethod);
-        const parsedAmount = amount ? parseKoreanAmount(amount) : 0;
+        const parsedAmount = amount ? (parseKoreanAmount(amount) ?? 0) : 0;
 
         const contract = await prisma.contract.create({
           data: {
@@ -176,7 +176,7 @@ export const contractTools = {
   // 계약 목록 조회
   listContracts: tool({
     description: '계약 목록을 조회합니다. 상태, 종류, 방법으로 필터링할 수 있습니다.',
-    parameters: z.object({
+    inputSchema: z.object({
       status: z.string().optional().describe('상태 필터 (시작 전, 진행 중, 대기, 지연, 완료)'),
       category: z.string().optional().describe('종류 필터'),
       method: z.string().optional().describe('방법 필터'),
@@ -234,7 +234,7 @@ export const contractTools = {
   // 계약 상세 조회
   getContract: tool({
     description: '특정 계약의 상세 정보를 조회합니다.',
-    parameters: z.object({
+    inputSchema: z.object({
       contractId: z.string().describe('계약 ID (예: C26-001) 또는 계약명 일부'),
     }),
     execute: async ({ contractId }) => {
@@ -320,7 +320,7 @@ export const contractTools = {
   // 계약 수정 (단계, 상태, 계약상대방 등)
   updateContract: tool({
     description: '계약 정보를 수정합니다. 단계, 상태, 계약상대방 등을 변경할 수 있습니다.',
-    parameters: z.object({
+    inputSchema: z.object({
       contractId: z.string().describe('계약 ID'),
       stage: z.string().optional().describe('변경할 단계'),
       status: z.string().optional().describe('변경할 상태'),
@@ -386,7 +386,7 @@ export const contractTools = {
 
         // 금액 변경
         if (amount) {
-          const parsedAmount = parseKoreanAmount(amount);
+          const parsedAmount = parseKoreanAmount(amount) ?? 0;
           updates.amount = BigInt(parsedAmount);
           changes.push({
             field: '금액',
@@ -447,7 +447,7 @@ export const contractTools = {
   // 메모 추가
   addNote: tool({
     description: '계약에 메모를 추가합니다.',
-    parameters: z.object({
+    inputSchema: z.object({
       contractId: z.string().describe('계약 ID'),
       content: z.string().describe('메모 내용'),
       tags: z.array(z.string()).optional().describe('태그 배열'),
@@ -519,7 +519,7 @@ export const contractTools = {
   // 계약 삭제
   deleteContract: tool({
     description: '계약을 삭제합니다 (소프트 삭제).',
-    parameters: z.object({
+    inputSchema: z.object({
       contractId: z.string().describe('계약 ID'),
       confirm: z.boolean().describe('삭제 확인 (true면 삭제 실행)'),
     }),
@@ -580,14 +580,14 @@ export const contractTools = {
   // 예산 설정
   setBudget: tool({
     description: '연간 예산을 설정합니다.',
-    parameters: z.object({
+    inputSchema: z.object({
       amount: z.string().describe('예산 금액 (예: 50억, 5000만원)'),
     }),
     execute: async ({ amount }) => {
       try {
         const year = new Date().getFullYear();
         const budgetKey = `annual_budget_${year}`;
-        const parsedAmount = parseKoreanAmount(amount);
+        const parsedAmount = parseKoreanAmount(amount) ?? 0;
 
         await prisma.config.upsert({
           where: { key: budgetKey },
