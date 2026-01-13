@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.7",
+    "@ai-sdk/react": "^3.0.33",
     "@neondatabase/serverless": "^0.10.4",
     "@prisma/adapter-neon": "^6.2.0",
     "@prisma/client": "^6.2.0",
