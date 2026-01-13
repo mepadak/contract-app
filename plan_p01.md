@@ -1,6 +1,9 @@
-# Phase 1 진행 현황 - 기반 구축
+# Phase 1: 기반 구축 - 완료
 
-## 완료된 작업
+## 완료 일시
+2026-01-13
+
+## 완료된 작업 (9/9 단계 - 100%)
 
 ### Step 1: 프로젝트 초기화 ✅
 - [x] package.json 생성 (Next.js 15, React 19, Tailwind v4)
@@ -9,7 +12,6 @@
 - [x] postcss.config.mjs Tailwind v4 설정
 - [x] eslint.config.mjs ESLint 설정
 - [x] .prettierrc 코드 포맷팅 설정
-- [x] next-env.d.ts TypeScript 선언
 
 ### Step 2: 의존성 설치 ✅
 - [x] npm install 완료
@@ -50,51 +52,55 @@
 - [x] src/components/layout/header.tsx - 헤더 (44px, glass effect)
 - [x] src/components/layout/bottom-nav.tsx - 하단 네비게이션
 
----
+### Step 7: 인증 UI 페이지 ✅
+- [x] src/components/auth/pin-input.tsx - PIN 입력 컴포넌트
+- [x] src/app/setup/page.tsx - PIN 설정 페이지
+- [x] src/app/login/page.tsx - 로그인 페이지
+- [x] src/app/page.tsx - 루트 페이지 (리다이렉트)
+- [x] src/app/(authenticated)/layout.tsx - 인증 레이아웃
+- [x] src/app/(authenticated)/chat/page.tsx - 채팅 페이지 (스텁)
+- [x] src/app/(authenticated)/dashboard/page.tsx - 대시보드 페이지 (스텁)
+- [x] src/app/(authenticated)/contracts/page.tsx - 계약 목록 페이지 (스텁)
+- [x] src/app/(authenticated)/settings/page.tsx - 설정 페이지 (스텁)
 
-## 남은 작업
+### Step 8: 테스트 및 빌드 검증 ✅
+- [x] npm run build 성공
+- [x] 모든 페이지 정적/동적 생성 확인
 
-### Step 7: 인증 UI 페이지 ⏳
-- [ ] src/components/auth/pin-input.tsx - PIN 입력 컴포넌트
-- [ ] src/app/setup/page.tsx - PIN 설정 페이지
-- [ ] src/app/login/page.tsx - 로그인 페이지
-- [ ] src/app/page.tsx - 루트 페이지 (리다이렉트)
-- [ ] src/app/(authenticated)/layout.tsx - 인증 레이아웃
-- [ ] src/app/(authenticated)/chat/page.tsx - 채팅 페이지 (스텁)
-
-### Step 8: 테스트 및 검증 ⏳
-- [ ] npm run dev 개발 서버 실행
-- [ ] PIN 설정/인증 플로우 테스트
-- [ ] npm run build 빌드 검증
-
-### Step 9: Git 커밋 및 푸시 ⏳
-- [ ] 변경사항 스테이징
-- [ ] 커밋 메시지 작성
-- [ ] 원격 저장소 푸시
+### Step 9: Git 커밋 및 푸시 ✅
+- [x] 커밋: "Phase 1: 기반 구축 완료"
+- [x] 푸시: origin/main
 
 ---
 
-## 생성된 파일 목록
+## 생성된 파일 목록 (33개 파일)
 
 ```
 contract_MVP/
 ├── package.json                    ✅
+├── package-lock.json               ✅
 ├── tsconfig.json                   ✅
 ├── next.config.ts                  ✅
 ├── postcss.config.mjs              ✅
 ├── eslint.config.mjs               ✅
 ├── .prettierrc                     ✅
-├── next-env.d.ts                   ✅
+├── plan_phase1.md                  ✅
+├── plan_p01.md                     ✅
 ├── prisma/
 │   └── schema.prisma               ✅
 └── src/
     ├── app/
     │   ├── globals.css             ✅
     │   ├── layout.tsx              ✅
-    │   ├── page.tsx                ⏳
-    │   ├── setup/page.tsx          ⏳
-    │   ├── login/page.tsx          ⏳
-    │   ├── (authenticated)/        ⏳
+    │   ├── page.tsx                ✅
+    │   ├── setup/page.tsx          ✅
+    │   ├── login/page.tsx          ✅
+    │   ├── (authenticated)/
+    │   │   ├── layout.tsx          ✅
+    │   │   ├── chat/page.tsx       ✅
+    │   │   ├── dashboard/page.tsx  ✅
+    │   │   ├── contracts/page.tsx  ✅
+    │   │   └── settings/page.tsx   ✅
     │   └── api/
     │       └── auth/
     │           ├── setup/route.ts  ✅
@@ -105,7 +111,7 @@ contract_MVP/
     │   │   ├── header.tsx          ✅
     │   │   └── bottom-nav.tsx      ✅
     │   └── auth/
-    │       └── pin-input.tsx       ⏳
+    │       └── pin-input.tsx       ✅
     ├── lib/
     │   ├── prisma.ts               ✅
     │   ├── auth.ts                 ✅
@@ -129,4 +135,38 @@ contract_MVP/
 
 ---
 
-## 진행률: 67% (6/9 단계 완료)
+## 빌드 결과
+
+```
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      131 B         102 kB
+├ ○ /chat                                1.88 kB         104 kB
+├ ○ /contracts                           1.71 kB         104 kB
+├ ○ /dashboard                           1.68 kB         104 kB
+├ ○ /login                               2.56 kB         112 kB
+├ ○ /settings                            2.08 kB         104 kB
+└ ○ /setup                               2.67 kB         112 kB
+
+ƒ Middleware                             34.7 kB
+```
+
+---
+
+## 다음 단계 (Phase 2)
+
+Phase 2에서 구현할 기능:
+1. AI 채팅 시스템 (Vercel AI SDK + Gemini)
+2. 계약 CRUD API
+3. 채팅 UI 컴포넌트
+4. 계약 카드/상세 컴포넌트
+5. 메모 기능
+
+**필요 사항**: `GOOGLE_GENERATIVE_AI_API_KEY` 환경변수 추가
+
+---
+
+## Git 커밋 정보
+
+- **커밋 해시**: 8257ccc
+- **브랜치**: main
+- **리모트**: origin (https://github.com/mepadak/contract-app.git)
