@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+@theme {
+  /* Warm White Palette - avoiding stark cold whites */
+  --color-surface-primary: #FEFEFE;
+  --color-surface-secondary: #FAFAF9;
+  --color-surface-tertiary: #F5F5F4;
+  --color-surface-elevated: #FFFFFF;
+
+  /* Text Colors - warm grays */
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #57534E;
+  --color-text-tertiary: #A8A29E;
+  --color-text-inverse: #FEFEFE;
+
+  /* Accent - Sophisticated Blue */
+  --color-accent-50: #EFF6FF;
+  --color-accent-100: #DBEAFE;
+  --color-accent-200: #BFDBFE;
+  --color-accent-500: #3B82F6;
+  --color-accent-600: #2563EB;
+  --color-accent-700: #1D4ED8;
+
+  /* Status Colors - carefully balanced */
+  --color-status-before: #A8A29E;
+  --color-status-progress: #3B82F6;
+  --color-status-waiting: #F59E0B;
+  --color-status-delayed: #EF4444;
+  --color-status-complete: #10B981;
+
+  /* Borders & Dividers */
+  --color-border-subtle: #F0EFED;
+  --color-border-default: #E7E5E4;
+  --color-border-strong: #D6D3D1;
+
+  /* Shadows - layered for depth */
+  --shadow-xs: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-sm: 0 2px 4px rgba(28, 25, 23, 0.04), 0 1px 2px rgba(28, 25, 23, 0.02);
+  --shadow-md: 0 4px 12px rgba(28, 25, 23, 0.06), 0 2px 4px rgba(28, 25, 23, 0.04);
+  --shadow-lg: 0 8px 24px rgba(28, 25, 23, 0.08), 0 4px 8px rgba(28, 25, 23, 0.04);
+  --shadow-nav: 0 -4px 20px rgba(28, 25, 23, 0.06), 0 -1px 4px rgba(28, 25, 23, 0.02);
+
+  /* Animation Timing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+
+  /* Spacing Scale */
+  --spacing-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --spacing-safe-top: env(safe-area-inset-top, 0px);
+
+  /* Typography */
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 9999px;
+}
+
+/* Base Styles */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-family: var(--font-sans);
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar - subtle and refined */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}
+
+/* Mobile Height Fix */
+.min-h-screen-safe {
+  min-height: 100dvh;
+}
+
+/* Safe Area Padding */
+.pb-safe {
+  padding-bottom: max(0.5rem, var(--spacing-safe-bottom));
+}
+
+.pt-safe {
+  padding-top: var(--spacing-safe-top);
+}
+
+/* Focus States - accessible but subtle */
+.focus-ring {
+  @apply outline-none ring-2 ring-accent-500/30 ring-offset-2 ring-offset-surface-primary;
+}
+
+/* Animation Classes */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s var(--ease-out-expo) forwards;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s var(--ease-out-expo) forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s var(--ease-out-expo) forwards;
+}
+
+.animate-shake {
+  animation: shake 0.5s var(--ease-out-expo);
+}
+
+/* Staggered Animation Delays */
+.delay-75 { animation-delay: 75ms; }
+.delay-150 { animation-delay: 150ms; }
+.delay-225 { animation-delay: 225ms; }
+.delay-300 { animation-delay: 300ms; }
+
+/* Glass Effect for Nav */
+.glass-effect {
+  background: rgba(254, 254, 254, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* Active Press State */
+.press-effect {
+  transition: transform 0.15s var(--ease-out-expo);
+}
+
+.press-effect:active {
+  transform: scale(0.97);
+}
+
+/* Status Badge Styles */
+.badge-before { @apply bg-stone-100 text-stone-600; }
+.badge-progress { @apply bg-blue-50 text-blue-600; }
+.badge-waiting { @apply bg-amber-50 text-amber-600; }
+.badge-delayed { @apply bg-red-50 text-red-600; }
+.badge-complete { @apply bg-emerald-50 text-emerald-600; }

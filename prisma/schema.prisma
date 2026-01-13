@@ -1,0 +1,106 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Contract {
+  id               String    @id // C26-001 형식
+  title            String
+  category         Category
+  method           Method
+  requester        String?
+  requesterContact String?   @map("requester_contact")
+  budgetYear       Int       @default(2026) @map("budget_year")
+  amount           BigInt    @default(0)
+  contractor       String?
+  deadline         DateTime? @db.Date
+  status           Status    @default(BEFORE_START)
+  stage            String    @default("공고준비")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  notes Note[]
+
+  @@map("contracts")
+}
+
+model Note {
+  id         Int      @id @default(autoincrement())
+  contractId String   @map("contract_id")
+  content    String
+  tags       String[] @default([])
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+model ChangeLog {
+  id         Int      @id @default(autoincrement())
+  contractId String?  @map("contract_id")
+  action     Action
+  detail     String?
+  fromValue  String?  @map("from_value")
+  toValue    String?  @map("to_value")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("change_logs")
+}
+
+model Config {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("configs")
+}
+
+model Auth {
+  id        Int      @id @default(1)
+  pinHash   String   @map("pin_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("auth")
+}
+
+enum Category {
+  GOODS_PURCHASE    @map("물품(구매)")
+  GOODS_MANUFACTURE @map("물품(제조)")
+  SERVICE           @map("용역")
+  CONSTRUCTION      @map("공사")
+}
+
+enum Method {
+  OPEN_BID            @map("일반경쟁")
+  RESTRICTED_BID      @map("제한경쟁")
+  NOMINATED_BID       @map("지명경쟁")
+  OPEN_NEGOTIATION    @map("공개수의")
+  PRIVATE_NEGOTIATION @map("비공개수의")
+}
+
+enum Status {
+  BEFORE_START @map("시작 전")
+  IN_PROGRESS  @map("진행 중")
+  WAITING      @map("대기")
+  DELAYED      @map("지연")
+  COMPLETED    @map("완료")
+  DELETED      @map("삭제")
+}
+
+enum Action {
+  CREATE
+  UPDATE
+  STAGE
+  STATUS
+  NOTE
+  DELETE
+  BUDGET
+}
