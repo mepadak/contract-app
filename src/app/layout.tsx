@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { OfflineIndicator } from '@/components/ui/offline-indicator';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -39,6 +40,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-surface-secondary text-text-primary">
+        <OfflineIndicator />
         {children}
       </body>
     </html>

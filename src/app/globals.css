@@ -198,3 +198,131 @@ body {
 .badge-waiting { @apply bg-amber-50 text-amber-600; }
 .badge-delayed { @apply bg-red-50 text-red-600; }
 .badge-complete { @apply bg-emerald-50 text-emerald-600; }
+
+/* Touch Feedback Enhancements */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s var(--ease-out-expo) forwards;
+}
+
+/* Enhanced Button States */
+button,
+[role="button"],
+a[href] {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Interactive Element Touch Feedback */
+.tap-highlight {
+  position: relative;
+  overflow: hidden;
+}
+
+.tap-highlight:active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.05);
+  pointer-events: none;
+}
+
+/* Card Touch Effect */
+.card-interactive {
+  transition: transform 0.15s var(--ease-out-expo), box-shadow 0.15s var(--ease-out-expo);
+}
+
+.card-interactive:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Button Ripple Effect Container */
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.btn-ripple:active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  animation: ripple 0.4s ease-out forwards;
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid var(--color-surface-tertiary);
+  border-top-color: var(--color-accent-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pull to Refresh Indicator */
+.pull-indicator {
+  transition: transform 0.2s var(--ease-out-expo);
+}
+
+/* Skeleton Loading Animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 25%,
+    var(--color-surface-tertiary) 50%,
+    var(--color-surface-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Disabled State */
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* Text Selection */
+::selection {
+  background: var(--color-accent-100);
+  color: var(--color-accent-700);
+}
