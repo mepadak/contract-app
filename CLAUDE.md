@@ -11,8 +11,8 @@ Contract Manager Mobile - 국가기관 계약담당관을 위한 모바일 우�
 - **프레임워크**: Next.js 15 (App Router, React Server Components)
 - **UI**: React 19, Tailwind CSS 4, Lucide React 아이콘
 - **AI**: Vercel AI SDK 6.x + Google Gemini (gemini-1.5-flash)
-- **데이터베이스**: Vercel Postgres + Prisma 6.x (Edge 호환: @prisma/adapter-neon)
-- **런타임**: 모든 API 라우트에 Vercel Edge Runtime 사용
+- **데이터베이스**: Vercel Postgres + Prisma 6.x (@prisma/adapter-neon)
+- **런타임**: Node.js Runtime (Vercel Serverless Functions)
 - **언어**: TypeScript 5.x
 
 ## 빌드 명령어
@@ -39,21 +39,22 @@ npx prisma db push
 
 ## 아키텍처
 
-### Edge Runtime 설정
+### 런타임 설정
 
-모든 API 라우트는 Edge Runtime에서 실행됩니다. Prisma는 Edge 호환 설정이 필요합니다:
+모든 API 라우트는 Node.js Runtime (Vercel Serverless Functions)에서 실행됩니다. Prisma는 Neon 어댑터를 사용합니다:
 
 ```typescript
 // lib/prisma.ts
-import { Pool, neonConfig } from '@neondatabase/serverless';
+import { Pool } from '@neondatabase/serverless';
 import { PrismaNeon } from '@prisma/adapter-neon';
 import { PrismaClient } from '@prisma/client';
 
-neonConfig.fetchConnectionCache = true;
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaNeon(pool);
 export const prisma = new PrismaClient({ adapter });
 ```
+
+> **참고**: Edge Runtime은 Vercel 무료 플랜의 1MB 크기 제한으로 인해 Node.js Runtime으로 전환되었습니다.
 
 ### API 라우트
 

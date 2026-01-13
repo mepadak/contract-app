@@ -3,8 +3,6 @@ import { google } from '@ai-sdk/google';
 import { systemPrompt } from '@/lib/ai/system-prompt';
 import { contractTools } from '@/lib/ai/tools';
 
-export const runtime = 'edge';
-
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json();

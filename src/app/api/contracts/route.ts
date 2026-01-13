@@ -5,8 +5,6 @@ import { formatAmountShort } from '@/lib/utils';
 import { Status, Action, Method } from '@prisma/client';
 import { METHOD_STAGES } from '@/lib/constants';
 
-export const runtime = 'edge';
-
 // 계약 ID 생성
 async function generateContractId(): Promise<string> {
   const year = new Date().getFullYear();
