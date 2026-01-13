@@ -1,16 +1,15 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useRef } from 'react';
 import { ChatContainer } from '@/components/chat/chat-container';
 import { ChatInput } from '@/components/chat/chat-input';
 
 export default function ChatPage() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, setInput } = useChat({
+  const { messages, sendMessage, status } = useChat({
     api: '/api/chat',
   });
 
-  const formRef = useRef<HTMLFormElement>(null);
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   // 메시지 변환: Vercel AI SDK 형식 -> 컴포넌트 형식
   const formattedMessages = messages.map((m) => ({
@@ -21,12 +20,9 @@ export default function ChatPage() {
   }));
 
   // 메시지 전송 핸들러
-  const handleSend = (message: string) => {
-    setInput(message);
-    // 다음 틱에서 폼 제출
-    setTimeout(() => {
-      formRef.current?.requestSubmit();
-    }, 0);
+  const handleSend = async (message: string) => {
+    if (!message.trim()) return;
+    await sendMessage(message);
   };
 
   return (
@@ -40,12 +36,6 @@ export default function ChatPage() {
       />
 
       {/* 입력 영역 */}
-      <form ref={formRef} onSubmit={handleSubmit} className="hidden">
-        <input
-          value={input}
-          onChange={handleInputChange}
-        />
-      </form>
       <ChatInput
         onSend={handleSend}
         isLoading={isLoading}
