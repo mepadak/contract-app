@@ -36,6 +36,7 @@ export default function ChatPage() {
         messages={formattedMessages}
         isLoading={isLoading}
         className="flex-1"
+        onQuickAction={handleSend}
       />
 
       {/* 입력 영역 */}

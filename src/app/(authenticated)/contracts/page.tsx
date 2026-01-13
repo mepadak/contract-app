@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, FileText, RefreshCw } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Search, FileText, RefreshCw, SlidersHorizontal, X, Check } from 'lucide-react';
 import { ContractCard, ContractCardSkeleton } from '@/components/contract/contract-card';
 import { ContractDetailModal } from '@/components/contract/contract-detail-modal';
 import { cn } from '@/lib/utils';
+import { STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS } from '@/lib/constants';
 import type { Status, Category, Method, Action } from '@prisma/client';
 
 interface Contract {
@@ -60,17 +62,44 @@ interface HistoryItem {
   createdAt: string;
 }
 
+interface Filters {
+  status: Status | '';
+  category: Category | '';
+  method: Method | '';
+}
+
+const FILTER_OPTIONS = {
+  status: Object.entries(STATUS_LABELS).filter(([key]) => key !== 'DELETED'),
+  category: Object.entries(CATEGORY_LABELS),
+  method: Object.entries(METHOD_LABELS),
+};
+
 export default function ContractsPage() {
+  const searchParams = useSearchParams();
+  const highlightId = searchParams.get('highlight');
+
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // 필터 상태
+  const [filters, setFilters] = useState<Filters>({
+    status: '',
+    category: '',
+    method: '',
+  });
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [tempFilters, setTempFilters] = useState<Filters>(filters);
 
   // 상세 모달 상태
   const [selectedContract, setSelectedContract] = useState<ContractDetail | null>(null);
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
   const [selectedHistory, setSelectedHistory] = useState<HistoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 활성 필터 개수
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
 
   // 계약 목록 조회
   const fetchContracts = useCallback(async () => {
@@ -80,6 +109,9 @@ export default function ContractsPage() {
 
       const params = new URLSearchParams();
       if (searchQuery) params.set('search', searchQuery);
+      if (filters.status) params.set('status', filters.status);
+      if (filters.category) params.set('category', filters.category);
+      if (filters.method) params.set('method', filters.method);
 
       const response = await fetch(`/api/contracts?${params}`);
       if (!response.ok) throw new Error('목록 조회 실패');
@@ -91,7 +123,7 @@ export default function ContractsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, filters]);
 
   // 계약 상세 조회
   const fetchContractDetail = async (id: string) => {
@@ -109,13 +141,45 @@ export default function ContractsPage() {
     }
   };
 
-  // 초기 로드 및 검색 변경 시 조회
+  // 초기 로드 및 검색/필터 변경 시 조회
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchContracts();
     }, searchQuery ? 300 : 0);
     return () => clearTimeout(timer);
   }, [fetchContracts, searchQuery]);
+
+  // 하이라이트된 계약 자동 열기
+  useEffect(() => {
+    if (highlightId && !isLoading && contracts.length > 0) {
+      const contract = contracts.find((c) => c.id === highlightId);
+      if (contract) {
+        fetchContractDetail(highlightId);
+      }
+    }
+  }, [highlightId, isLoading, contracts]);
+
+  // 필터 모달 열기
+  const handleOpenFilterModal = () => {
+    setTempFilters(filters);
+    setFilterModalOpen(true);
+  };
+
+  // 필터 적용
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    setFilterModalOpen(false);
+  };
+
+  // 필터 초기화
+  const handleResetFilters = () => {
+    setTempFilters({ status: '', category: '', method: '' });
+  };
+
+  // 필터 칩 클릭 (특정 필터 제거)
+  const handleRemoveFilter = (key: keyof Filters) => {
+    setFilters((prev) => ({ ...prev, [key]: '' }));
+  };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -134,12 +198,62 @@ export default function ContractsPage() {
           </div>
           <button
             type="button"
+            onClick={handleOpenFilterModal}
+            className={cn(
+              'relative flex h-10 w-10 items-center justify-center rounded-xl border transition-all',
+              activeFilterCount > 0
+                ? 'bg-accent-50 border-accent-200 text-accent-600'
+                : 'bg-surface-secondary border-surface-tertiary text-text-tertiary hover:text-text-primary hover:border-accent-primary/30'
+            )}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center text-[10px] font-medium text-white bg-accent-600 rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
             onClick={() => fetchContracts()}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-secondary border border-surface-tertiary text-text-tertiary hover:text-text-primary hover:border-accent-primary/30 transition-all"
           >
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           </button>
         </div>
+
+        {/* 활성 필터 칩 */}
+        {activeFilterCount > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {filters.status && (
+              <button
+                onClick={() => handleRemoveFilter('status')}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-accent-700 bg-accent-50 rounded-full hover:bg-accent-100 transition-colors"
+              >
+                {STATUS_LABELS[filters.status]}
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {filters.category && (
+              <button
+                onClick={() => handleRemoveFilter('category')}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-accent-700 bg-accent-50 rounded-full hover:bg-accent-100 transition-colors"
+              >
+                {CATEGORY_LABELS[filters.category]}
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {filters.method && (
+              <button
+                onClick={() => handleRemoveFilter('method')}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-accent-700 bg-accent-50 rounded-full hover:bg-accent-100 transition-colors"
+              >
+                {METHOD_LABELS[filters.method]}
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 컨텐츠 */}
@@ -172,11 +286,19 @@ export default function ContractsPage() {
                 <FileText className="h-10 w-10 text-accent-primary" strokeWidth={1.5} />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-text-primary">계약이 없습니다</h2>
+                <h2 className="text-xl font-semibold text-text-primary">
+                  {activeFilterCount > 0 ? '검색 결과가 없습니다' : '계약이 없습니다'}
+                </h2>
                 <p className="mt-2 text-sm text-text-secondary leading-relaxed">
-                  채팅으로 새 계약을 등록해보세요
-                  <br />
-                  <span className="text-text-tertiary">&quot;서버 유지보수 5천만원 등록해줘&quot;</span>
+                  {activeFilterCount > 0 ? (
+                    '다른 조건으로 검색해보세요'
+                  ) : (
+                    <>
+                      채팅으로 새 계약을 등록해보세요
+                      <br />
+                      <span className="text-text-tertiary">&quot;서버 유지보수 5천만원 등록해줘&quot;</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -184,9 +306,7 @@ export default function ContractsPage() {
         ) : (
           // 계약 목록
           <div className="p-4 space-y-3 pb-24">
-            <p className="text-xs text-text-tertiary mb-2">
-              총 {contracts.length}건
-            </p>
+            <p className="text-xs text-text-tertiary mb-2">총 {contracts.length}건</p>
             {contracts.map((contract) => (
               <ContractCard
                 key={contract.id}
@@ -210,6 +330,122 @@ export default function ContractsPage() {
             setSelectedContract(null);
           }}
         />
+      )}
+
+      {/* 필터 모달 */}
+      {filterModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 animate-fade-in">
+          <div className="w-full max-w-md bg-white rounded-t-3xl p-6 animate-slide-up max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-text-primary">필터</h3>
+              <button
+                onClick={() => setFilterModalOpen(false)}
+                className="p-2 rounded-full hover:bg-surface-secondary transition-colors"
+              >
+                <X className="h-5 w-5 text-text-secondary" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* 상태 필터 */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-3">상태</label>
+                <div className="flex flex-wrap gap-2">
+                  {FILTER_OPTIONS.status.map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() =>
+                        setTempFilters((prev) => ({
+                          ...prev,
+                          status: prev.status === key ? '' : (key as Status),
+                        }))
+                      }
+                      className={cn(
+                        'px-3 py-1.5 text-sm rounded-lg border transition-colors',
+                        tempFilters.status === key
+                          ? 'bg-accent-600 text-white border-accent-600'
+                          : 'bg-surface-secondary text-text-secondary border-transparent hover:border-accent-300'
+                      )}
+                    >
+                      {tempFilters.status === key && <Check className="h-3 w-3 inline mr-1" />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 종류 필터 */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-3">종류</label>
+                <div className="flex flex-wrap gap-2">
+                  {FILTER_OPTIONS.category.map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() =>
+                        setTempFilters((prev) => ({
+                          ...prev,
+                          category: prev.category === key ? '' : (key as Category),
+                        }))
+                      }
+                      className={cn(
+                        'px-3 py-1.5 text-sm rounded-lg border transition-colors',
+                        tempFilters.category === key
+                          ? 'bg-accent-600 text-white border-accent-600'
+                          : 'bg-surface-secondary text-text-secondary border-transparent hover:border-accent-300'
+                      )}
+                    >
+                      {tempFilters.category === key && <Check className="h-3 w-3 inline mr-1" />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 계약 방법 필터 */}
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-3">계약 방법</label>
+                <div className="flex flex-wrap gap-2">
+                  {FILTER_OPTIONS.method.map(([key, label]) => (
+                    <button
+                      key={key}
+                      onClick={() =>
+                        setTempFilters((prev) => ({
+                          ...prev,
+                          method: prev.method === key ? '' : (key as Method),
+                        }))
+                      }
+                      className={cn(
+                        'px-3 py-1.5 text-sm rounded-lg border transition-colors',
+                        tempFilters.method === key
+                          ? 'bg-accent-600 text-white border-accent-600'
+                          : 'bg-surface-secondary text-text-secondary border-transparent hover:border-accent-300'
+                      )}
+                    >
+                      {tempFilters.method === key && <Check className="h-3 w-3 inline mr-1" />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 버튼 */}
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={handleResetFilters}
+                className="flex-1 px-4 py-3 text-sm font-medium text-text-secondary bg-surface-secondary rounded-xl hover:bg-surface-tertiary transition-colors"
+              >
+                초기화
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className="flex-1 px-4 py-3 text-sm font-medium text-white bg-accent-600 rounded-xl hover:bg-accent-700 transition-colors"
+              >
+                적용
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

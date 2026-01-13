@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import { MessageBubble, TypingIndicator } from './message-bubble';
 import { cn } from '@/lib/utils';
+import { FileText, LayoutDashboard, ListFilter, Sparkles } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -15,9 +16,17 @@ interface ChatContainerProps {
   messages: Message[];
   isLoading?: boolean;
   className?: string;
+  onQuickAction?: (message: string) => void;
 }
 
-export function ChatContainer({ messages, isLoading, className }: ChatContainerProps) {
+const QUICK_ACTIONS = [
+  { icon: FileText, text: '서버 유지보수 용역 5천만원 등록해줘', label: '계약 등록' },
+  { icon: ListFilter, text: '전체 계약 목록 보여줘', label: '목록 조회' },
+  { icon: LayoutDashboard, text: '대시보드 현황 보여줘', label: '대시보드' },
+  { icon: Sparkles, text: '도움말', label: '도움말' },
+];
+
+export function ChatContainer({ messages, isLoading, className, onQuickAction }: ChatContainerProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -25,6 +34,12 @@ export function ChatContainer({ messages, isLoading, className }: ChatContainerP
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  const handleQuickAction = (text: string) => {
+    if (onQuickAction) {
+      onQuickAction(text);
+    }
+  };
 
   return (
     <div
@@ -37,16 +52,38 @@ export function ChatContainer({ messages, isLoading, className }: ChatContainerP
     >
       <div className="p-4 space-y-4">
         {messages.length === 0 ? (
-          <EmptyState />
+          <EmptyState onQuickAction={handleQuickAction} />
         ) : (
-          messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              role={message.role}
-              content={message.content}
-              timestamp={message.createdAt}
-            />
-          ))
+          <>
+            {messages.map((message) => (
+              <MessageBubble
+                key={message.id}
+                role={message.role}
+                content={message.content}
+                timestamp={message.createdAt}
+              />
+            ))}
+
+            {/* 메시지가 있을 때의 퀵 액션 (하단에 작게 표시) */}
+            {!isLoading && (
+              <div className="pt-4">
+                <p className="text-xs text-text-tertiary mb-2">빠른 명령</p>
+                <div className="flex flex-wrap gap-2">
+                  {QUICK_ACTIONS.slice(0, 3).map(({ icon: Icon, text, label }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => handleQuickAction(text)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-text-secondary bg-surface-secondary rounded-full hover:bg-surface-tertiary hover:text-text-primary transition-colors"
+                    >
+                      <Icon className="h-3 w-3" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* 로딩 인디케이터 */}
@@ -60,7 +97,7 @@ export function ChatContainer({ messages, isLoading, className }: ChatContainerP
 }
 
 // 빈 상태 컴포넌트
-function EmptyState() {
+function EmptyState({ onQuickAction }: { onQuickAction?: (text: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center px-6">
       {/* 로고/아이콘 */}
@@ -90,35 +127,32 @@ function EmptyState() {
 
       {/* 예시 명령어 */}
       <div className="w-full max-w-sm space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
-        <QuickAction text="서버 유지보수 용역 5천만원 등록해줘" />
-        <QuickAction text="전체 계약 목록 보여줘" />
-        <QuickAction text="대시보드 현황" />
+        {QUICK_ACTIONS.map(({ icon: Icon, text, label }) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => onQuickAction?.(text)}
+            className={cn(
+              'w-full px-4 py-3 rounded-xl',
+              'bg-surface-secondary/50 border border-surface-tertiary',
+              'text-left text-sm text-text-secondary',
+              'hover:bg-surface-secondary hover:border-accent-primary/20',
+              'transition-all duration-200',
+              'group flex items-center gap-3'
+            )}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-tertiary group-hover:bg-accent-50 transition-colors">
+              <Icon className="h-4 w-4 text-text-tertiary group-hover:text-accent-600 transition-colors" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-text-tertiary mb-0.5">{label}</p>
+              <p className="text-sm text-text-primary group-hover:text-accent-700 transition-colors">
+                {text}
+              </p>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
-  );
-}
-
-// 퀵 액션 버튼
-function QuickAction({ text }: { text: string }) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        'w-full px-4 py-3 rounded-xl',
-        'bg-surface-secondary/50 border border-surface-tertiary',
-        'text-left text-sm text-text-secondary',
-        'hover:bg-surface-secondary hover:border-accent-primary/20',
-        'transition-all duration-200',
-        'group'
-      )}
-    >
-      <span className="text-accent-primary/60 group-hover:text-accent-primary transition-colors">
-        &quot;
-      </span>
-      {text}
-      <span className="text-accent-primary/60 group-hover:text-accent-primary transition-colors">
-        &quot;
-      </span>
-    </button>
   );
 }
