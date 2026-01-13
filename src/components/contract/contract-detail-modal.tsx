@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, getDDay } from '@/lib/utils';
+import { cn, getDDay, formatDDay } from '@/lib/utils';
 import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS } from '@/lib/constants';
 import { X, Calendar, Building2, Coins, FileText, Clock, MessageSquare, History, Tag } from 'lucide-react';
 import type { Status, Category, Method, Action } from '@prisma/client';
@@ -146,7 +146,7 @@ export function ContractDetailModal({
                   icon={Calendar}
                   label="마감일"
                   value={contract.deadline || '-'}
-                  badge={dDay !== null ? (dDay < 0 ? `D+${Math.abs(dDay)}` : `D-${dDay}`) : undefined}
+                  badge={dDay !== null ? formatDDay(dDay) : undefined}
                   badgeType={dDay !== null && dDay < 0 ? 'danger' : dDay !== null && dDay <= 7 ? 'warning' : 'default'}
                 />
               </div>

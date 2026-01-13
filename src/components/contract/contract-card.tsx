@@ -1,6 +1,6 @@
 'use client';
 
-import { cn, getDDay } from '@/lib/utils';
+import { cn, getDDay, formatDDay } from '@/lib/utils';
 import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS } from '@/lib/constants';
 import { Calendar, ChevronRight } from 'lucide-react';
 import type { Status, Category, Method } from '@prisma/client';
@@ -109,7 +109,7 @@ export function ContractCard({
                   : 'bg-surface-secondary text-text-secondary'
               )}
             >
-              {isOverdue ? `D+${Math.abs(dDay)}` : `D-${dDay}`}
+              {formatDDay(dDay)}
             </span>
           )}
         </div>

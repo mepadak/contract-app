@@ -100,16 +100,19 @@ export function formatDate(date: Date | string): string {
   });
 }
 
-// D-Day 계산
-export function getDDay(deadline: Date | string): string {
+// D-Day 계산 (숫자 반환)
+export function getDDay(deadline: Date | string): number {
   const target = typeof deadline === 'string' ? new Date(deadline) : deadline;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   target.setHours(0, 0, 0, 0);
 
-  const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
 
-  if (diff === 0) return 'D-Day';
-  if (diff > 0) return `D-${diff}`;
-  return `D+${Math.abs(diff)}`;
+// D-Day 포맷팅 (표시용)
+export function formatDDay(days: number): string {
+  if (days === 0) return 'D-Day';
+  if (days > 0) return `D-${days}`;
+  return `D+${Math.abs(days)}`;
 }
