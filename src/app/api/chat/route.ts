@@ -1,4 +1,5 @@
-import { streamText, stepCountIs } from 'ai';
+import { streamText, stepCountIs, convertToModelMessages } from 'ai';
+import type { UIMessage } from 'ai';
 import { google } from '@ai-sdk/google';
 import { systemPrompt } from '@/lib/ai/system-prompt';
 import { contractTools } from '@/lib/ai/tools';
@@ -25,12 +26,15 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
 
     // 최근 10개 메시지만 유지 (컨텍스트 관리)
-    const recentMessages = messages.slice(-10);
+    const recentMessages = (messages as UIMessage[]).slice(-10);
+
+    // UIMessage → ModelMessage 변환 (AI SDK 6.x 필수)
+    const modelMessages = await convertToModelMessages(recentMessages);
 
     const result = streamText({
       model: google('gemini-2.5-flash'),
       system: systemPrompt,
-      messages: recentMessages,
+      messages: modelMessages,
       tools: contractTools,
       // AI SDK 6.x: maxSteps → stopWhen
       stopWhen: stepCountIs(5),
