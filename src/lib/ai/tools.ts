@@ -11,15 +11,18 @@ async function generateContractId(): Promise<string> {
   const yearShort = year.toString().slice(-2);
   const counterKey = `id_counter_${year}`;
 
-  // 현재 카운터 조회 또는 생성
-  const config = await prisma.config.upsert({
+  let config = await prisma.config.findUnique({
     where: { key: counterKey },
-    update: { value: { increment: 1 }.toString() },
-    create: { key: counterKey, value: '1' },
   });
 
-  // 카운터 증가
+  if (!config) {
+    config = await prisma.config.create({
+      data: { key: counterKey, value: '1' },
+    });
+  }
+
   const counter = parseInt(config.value, 10);
+
   await prisma.config.update({
     where: { key: counterKey },
     data: { value: (counter + 1).toString() },
@@ -586,7 +589,7 @@ export const contractTools = {
     execute: async ({ amount }) => {
       try {
         const year = new Date().getFullYear();
-        const budgetKey = `annual_budget_${year}`;
+        const budgetKey = 'annual_budget';
         const parsedAmount = parseKoreanAmount(amount) ?? 0;
 
         await prisma.config.upsert({
