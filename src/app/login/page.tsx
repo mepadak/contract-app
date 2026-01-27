@@ -14,7 +14,10 @@ export default function LoginPage() {
   useEffect(() => {
     // PIN 설정 여부 확인
     fetch('/api/auth/setup')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('API error');
+        return res.json();
+      })
       .then((data) => {
         if (!data.isSetup) {
           router.replace('/setup');

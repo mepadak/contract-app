@@ -11,6 +11,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // 루트 경로는 서버 컴포넌트가 DB 기반 라우팅 처리
+  if (pathname === '/') {
+    return NextResponse.next();
+  }
+
   // 공개 경로는 허용
   if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();

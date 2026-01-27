@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PinInput } from '@/components/auth/pin-input';
 import { Shield, ChevronLeft } from 'lucide-react';
@@ -13,6 +13,23 @@ export default function SetupPage() {
   const [firstPin, setFirstPin] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+
+  useEffect(() => {
+    // PIN이 이미 설정되어 있으면 로그인 페이지로 리다이렉트
+    fetch('/api/auth/setup')
+      .then((res) => {
+        if (!res.ok) throw new Error('API error');
+        return res.json();
+      })
+      .then((data) => {
+        if (data.isSetup) {
+          router.replace('/login');
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCheckingSetup(false));
+  }, [router]);
 
   const handleFirstPin = (pin: string) => {
     setFirstPin(pin);
@@ -56,6 +73,17 @@ export default function SetupPage() {
     setFirstPin('');
     setError('');
   };
+
+  if (checkingSetup) {
+    return (
+      <div className="flex min-h-screen-safe items-center justify-center bg-surface-primary">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-3 border-accent-200 border-t-accent-600" />
+          <p className="text-sm text-text-tertiary">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen-safe flex-col bg-surface-primary">
