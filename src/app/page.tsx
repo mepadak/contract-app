@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export default async function Home() {
   // PIN 설정 여부 확인

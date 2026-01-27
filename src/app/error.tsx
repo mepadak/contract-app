@@ -46,7 +46,7 @@ export default function Error({
           </button>
 
           <Link
-            href="/chat"
+            href="/"
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-surface-secondary px-4 py-3 font-medium text-text-primary transition-all hover:bg-surface-tertiary active:scale-[0.98]"
           >
             <Home className="h-4 w-4" />
