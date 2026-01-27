@@ -49,3 +49,6 @@ prisma/*.db-journal
 # Claude Code
 .claude/
 tmpclaude*
+
+.vercel
+.env*.local
