@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ALERT_THRESHOLDS, STATUS_LABELS } from '@/lib/constants';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 interface StatusSummary {
   count: number;

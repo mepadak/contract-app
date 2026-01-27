@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { hashPin, createSession } from '@/lib/auth';
 import { z } from 'zod';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 const SetupSchema = z.object({
   pin: z.string().length(4).regex(/^\d+$/, 'PIN은 4자리 숫자여야 합니다'),

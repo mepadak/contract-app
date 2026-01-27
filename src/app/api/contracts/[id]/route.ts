@@ -5,7 +5,7 @@ import { formatAmountShort } from '@/lib/utils';
 import { Status, Action, Method } from '@prisma/client';
 import { METHOD_STAGES } from '@/lib/constants';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 // 메서드 라벨 가져오기
 function getMethodLabel(method: Method): string {

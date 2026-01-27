@@ -3,7 +3,7 @@ import { google } from '@ai-sdk/google';
 import { systemPrompt } from '@/lib/ai/system-prompt';
 import { contractTools } from '@/lib/ai/tools';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
