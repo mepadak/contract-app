@@ -1,7 +1,7 @@
 'use client';
 
 import { cn, getDDay, formatDDay } from '@/lib/utils';
-import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS } from '@/lib/constants';
+import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS, STAGE_COLORS } from '@/lib/constants';
 import { Calendar, ChevronRight } from 'lucide-react';
 import type { Status, Category, Method } from '@prisma/client';
 
@@ -27,7 +27,6 @@ export function ContractCard({
   amountFormatted,
   status,
   stage,
-  progress,
   deadline,
   onClick,
 }: ContractCardProps) {
@@ -74,21 +73,9 @@ export function ContractCard({
         <span className="font-medium text-text-primary">{amountFormatted}</span>
       </div>
 
-      {/* 진행률 */}
+      {/* 단계 배지 */}
       <div className="mb-3">
-        <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-text-secondary">{stage}</span>
-          <span className="text-text-tertiary">{progress}%</span>
-        </div>
-        <div className="h-1.5 bg-surface-secondary rounded-full overflow-hidden">
-          <div
-            className={cn(
-              'h-full rounded-full transition-all duration-500',
-              progress === 100 ? 'bg-emerald-500' : 'bg-accent-primary'
-            )}
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+        <StageBadge stage={stage} />
       </div>
 
       {/* 마감일 */}
@@ -147,6 +134,33 @@ function StatusBadge({
       )}
     >
       {label}
+    </span>
+  );
+}
+
+// 단계 배지
+function StageBadge({ stage }: { stage: string }) {
+  const stageColor = STAGE_COLORS[stage] || 'gray';
+
+  const colorClasses: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-600 border-slate-200',
+    blue: 'bg-blue-100 text-blue-600 border-blue-200',
+    indigo: 'bg-indigo-100 text-indigo-600 border-indigo-200',
+    violet: 'bg-violet-100 text-violet-600 border-violet-200',
+    amber: 'bg-amber-100 text-amber-600 border-amber-200',
+    orange: 'bg-orange-100 text-orange-600 border-orange-200',
+    emerald: 'bg-emerald-100 text-emerald-600 border-emerald-200',
+    gray: 'bg-gray-100 text-gray-600 border-gray-200',
+  };
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-lg border',
+        colorClasses[stageColor] || colorClasses.gray
+      )}
+    >
+      {stage}
     </span>
   );
 }

@@ -32,11 +32,24 @@ export const createContractSchema = z.object({
   title: z.string().min(1, '계약명은 필수입니다'),
   category: categorySchema,
   method: methodSchema,
-  amount: z.number().int().nonnegative().optional().default(0),
+  // 금액 필드
+  amount: z.number().int().nonnegative().optional().default(0), // 하위호환
+  budget: z.number().int().nonnegative().optional().default(0), // 예산
+  contractAmount: z.number().int().nonnegative().optional().default(0), // 계약금액
+  executionAmount: z.number().int().nonnegative().optional().default(0), // 집행금액
+  // 기본 정보
   requester: z.string().optional().nullable(),
   requesterContact: z.string().optional().nullable(),
-  deadline: z.string().datetime().optional().nullable(),
   contractor: z.string().optional().nullable(),
+  // 일자 필드
+  deadline: z.string().optional().nullable(), // 하위호환 (마감일)
+  requestDate: z.string().optional().nullable(), // 요청일
+  announcementStart: z.string().optional().nullable(), // 공고시작일
+  announcementEnd: z.string().optional().nullable(), // 공고종료일
+  openingDate: z.string().optional().nullable(), // 개찰일
+  contractStart: z.string().optional().nullable(), // 계약시작일
+  contractEnd: z.string().optional().nullable(), // 계약종료일
+  paymentDate: z.string().optional().nullable(), // 대금집행일
 });
 
 // 계약 수정 스키마
@@ -44,13 +57,26 @@ export const updateContractSchema = z.object({
   title: z.string().min(1).optional(),
   category: categorySchema.optional(),
   method: methodSchema.optional(),
+  // 금액 필드
   amount: z.number().int().nonnegative().optional(),
+  budget: z.number().int().nonnegative().optional(),
+  contractAmount: z.number().int().nonnegative().optional(),
+  executionAmount: z.number().int().nonnegative().optional(),
+  // 기본 정보
   requester: z.string().optional().nullable(),
   requesterContact: z.string().optional().nullable(),
-  deadline: z.string().datetime().optional().nullable(),
   contractor: z.string().optional().nullable(),
   stage: z.string().optional(),
   status: statusSchema.optional(),
+  // 일자 필드
+  deadline: z.string().optional().nullable(),
+  requestDate: z.string().optional().nullable(),
+  announcementStart: z.string().optional().nullable(),
+  announcementEnd: z.string().optional().nullable(),
+  openingDate: z.string().optional().nullable(),
+  contractStart: z.string().optional().nullable(),
+  contractEnd: z.string().optional().nullable(),
+  paymentDate: z.string().optional().nullable(),
 });
 
 // 메모 생성 스키마

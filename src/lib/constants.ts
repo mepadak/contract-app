@@ -64,4 +64,16 @@ export const ALERT_THRESHOLDS = {
   CRITICAL_DAYS: 3, // D-3 이내: 경고
   WARNING_DAYS: 7, // D-7 이내: 주의
   WAITING_DAYS: 7, // 대기 상태 7일 이상: 주의
+  CONTRACT_END_WARNING: 5, // 계약종료 5일 전 주의
 } as const;
+
+// 단계별 색상
+export const STAGE_COLORS: Record<string, string> = {
+  '공고준비': 'slate',
+  '공고중': 'blue',
+  '개찰완료': 'indigo',
+  '계약준비': 'violet',
+  '계약완료': 'amber',
+  '지출준비': 'orange',
+  '집행완료': 'emerald',
+};

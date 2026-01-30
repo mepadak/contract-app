@@ -159,11 +159,25 @@ export async function POST(req: NextRequest) {
         title: input.title,
         category: input.category,
         method: input.method,
+        // 금액 필드
         amount: BigInt(input.amount),
+        budget: BigInt(input.budget ?? 0),
+        contractAmount: BigInt(input.contractAmount ?? 0),
+        executionAmount: BigInt(input.executionAmount ?? 0),
+        // 기본 정보
         requester: input.requester || null,
         requesterContact: input.requesterContact || null,
-        deadline: input.deadline ? new Date(input.deadline) : null,
         contractor: input.contractor || null,
+        // 일자 필드
+        deadline: input.deadline ? new Date(input.deadline) : null,
+        requestDate: input.requestDate ? new Date(input.requestDate) : null,
+        announcementStart: input.announcementStart ? new Date(input.announcementStart) : null,
+        announcementEnd: input.announcementEnd ? new Date(input.announcementEnd) : null,
+        openingDate: input.openingDate ? new Date(input.openingDate) : null,
+        contractStart: input.contractStart ? new Date(input.contractStart) : null,
+        contractEnd: input.contractEnd ? new Date(input.contractEnd) : null,
+        paymentDate: input.paymentDate ? new Date(input.paymentDate) : null,
+        // 상태
         stage: initialStage,
         status: Status.BEFORE_START,
       },

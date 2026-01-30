@@ -34,8 +34,13 @@ export async function GET() {
         id: true,
         title: true,
         status: true,
+        stage: true,
         amount: true,
+        budget: true,
+        contractAmount: true,
+        executionAmount: true,
         deadline: true,
+        contractEnd: true,
         updatedAt: true,
       },
     });
@@ -48,22 +53,27 @@ export async function GET() {
       statusSummary[STATUS_LABELS[key]] = { count: 0, amount: 0 };
     }
 
-    let allocatedAmount = BigInt(0); // 배정 예산 (진행 중 + 대기 + 지연)
-    let executedAmount = BigInt(0);  // 집행 예산 (완료)
+    let allocatedAmount = BigInt(0); // 배정 예산 (진행 중 + 대기 + 지연의 예산 합계)
+    let contractedAmount = BigInt(0); // 계약 금액 합계
+    let executedAmount = BigInt(0);  // 집행 금액 합계 (완료된 계약)
 
     for (const contract of contracts) {
       const label = STATUS_LABELS[contract.status] || contract.status;
+      // 새 금액 구조 사용: budget > 0이면 budget 사용, 아니면 amount 사용 (하위호환)
+      const displayAmount = Number(contract.budget) > 0 ? Number(contract.budget) : Number(contract.amount);
+
       if (statusSummary[label]) {
         statusSummary[label].count += 1;
-        statusSummary[label].amount += Number(contract.amount);
+        statusSummary[label].amount += displayAmount;
       }
 
       // 예산 집계
       if (['IN_PROGRESS', 'WAITING', 'DELAYED'].includes(contract.status)) {
-        allocatedAmount += contract.amount;
+        allocatedAmount += contract.budget > 0 ? contract.budget : contract.amount;
+        contractedAmount += contract.contractAmount;
       }
       if (contract.status === 'COMPLETED') {
-        executedAmount += contract.amount;
+        executedAmount += contract.executionAmount > 0 ? contract.executionAmount : contract.amount;
       }
     }
 
@@ -93,6 +103,37 @@ export async function GET() {
           deadline: contract.deadline?.toISOString().split('T')[0] || null,
         });
         continue;
+      }
+
+      // 계약종료일 기준 판정 (계약완료 단계인 경우)
+      if (contract.stage === '계약완료' && contract.contractEnd) {
+        const contractEnd = new Date(contract.contractEnd);
+        const diffTime = contractEnd.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) {
+          // 계약종료일 경과 → 경고
+          alerts.push({
+            contractId: contract.id,
+            title: contract.title,
+            level: 'critical',
+            reason: `계약종료 ${Math.abs(diffDays)}일 경과`,
+            deadline: contract.contractEnd.toISOString().split('T')[0],
+          });
+          continue;
+        }
+
+        if (diffDays <= ALERT_THRESHOLDS.CONTRACT_END_WARNING) {
+          // 계약종료 5일 이내 → 주의
+          alerts.push({
+            contractId: contract.id,
+            title: contract.title,
+            level: 'warning',
+            reason: `계약종료 D-${diffDays}`,
+            deadline: contract.contractEnd.toISOString().split('T')[0],
+          });
+          continue;
+        }
       }
 
       // 마감일 기준 판정
@@ -152,6 +193,7 @@ export async function GET() {
       budget: {
         total: Number(totalBudget),
         allocated: Number(allocatedAmount),
+        contracted: Number(contractedAmount),
         executed: Number(executedAmount),
         remaining: Number(remaining),
         executionRate: Math.round(executionRate * 10) / 10,

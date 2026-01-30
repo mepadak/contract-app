@@ -63,23 +63,52 @@ export async function GET(
     const currentIndex = stages.indexOf(contract.stage);
     const progress = stages.length > 0 ? Math.round(((currentIndex + 1) / stages.length) * 100) : 0;
 
+    // 금액 계산
+    const budget = Number(contract.budget);
+    const contractAmt = Number(contract.contractAmount);
+    const executionAmt = Number(contract.executionAmount);
+    const contractBalance = budget - contractAmt; // 계약잔액
+    const executionBalance = contractAmt - executionAmt; // 집행잔액
+
     return Response.json({
       contract: {
         id: contract.id,
         title: contract.title,
         category: contract.category,
         method: contract.method,
+        // 금액 정보
         amount: Number(contract.amount),
         amountFormatted: formatAmountShort(Number(contract.amount)),
+        budget,
+        budgetFormatted: formatAmountShort(budget),
+        contractAmount: contractAmt,
+        contractAmountFormatted: formatAmountShort(contractAmt),
+        executionAmount: executionAmt,
+        executionAmountFormatted: formatAmountShort(executionAmt),
+        contractBalance,
+        contractBalanceFormatted: formatAmountShort(contractBalance),
+        executionBalance,
+        executionBalanceFormatted: formatAmountShort(executionBalance),
+        // 상태 정보
         status: contract.status,
         stage: contract.stage,
         progress,
         stages,
+        // 관련 정보
         requester: contract.requester,
         requesterContact: contract.requesterContact,
         contractor: contract.contractor,
-        deadline: contract.deadline?.toISOString().split('T')[0] || null,
         budgetYear: contract.budgetYear,
+        // 일자 정보
+        deadline: contract.deadline?.toISOString().split('T')[0] || null,
+        requestDate: contract.requestDate?.toISOString().split('T')[0] || null,
+        announcementStart: contract.announcementStart?.toISOString().split('T')[0] || null,
+        announcementEnd: contract.announcementEnd?.toISOString().split('T')[0] || null,
+        openingDate: contract.openingDate?.toISOString().split('T')[0] || null,
+        contractStart: contract.contractStart?.toISOString().split('T')[0] || null,
+        contractEnd: contract.contractEnd?.toISOString().split('T')[0] || null,
+        paymentDate: contract.paymentDate?.toISOString().split('T')[0] || null,
+        // 시스템 정보
         createdAt: contract.createdAt.toISOString(),
         updatedAt: contract.updatedAt.toISOString(),
       },
@@ -251,6 +280,86 @@ export async function PATCH(
           field: '마감일',
           from: oldDeadline?.toISOString().split('T')[0] || null,
           to: newDeadline?.toISOString().split('T')[0] || '없음',
+        });
+      }
+    }
+
+    // 금액 필드 변경
+    if (input.budget !== undefined && BigInt(input.budget) !== contract.budget) {
+      updates.budget = BigInt(input.budget);
+      changes.push({
+        action: Action.UPDATE,
+        field: '예산',
+        from: formatAmountShort(Number(contract.budget)),
+        to: formatAmountShort(input.budget),
+      });
+    }
+
+    if (input.contractAmount !== undefined && BigInt(input.contractAmount) !== contract.contractAmount) {
+      updates.contractAmount = BigInt(input.contractAmount);
+      changes.push({
+        action: Action.UPDATE,
+        field: '계약금액',
+        from: formatAmountShort(Number(contract.contractAmount)),
+        to: formatAmountShort(input.contractAmount),
+      });
+    }
+
+    if (input.executionAmount !== undefined && BigInt(input.executionAmount) !== contract.executionAmount) {
+      updates.executionAmount = BigInt(input.executionAmount);
+      changes.push({
+        action: Action.UPDATE,
+        field: '집행금액',
+        from: formatAmountShort(Number(contract.executionAmount)),
+        to: formatAmountShort(input.executionAmount),
+      });
+    }
+
+    // 일자 필드 변경
+    const dateFields: Array<{ key: keyof typeof input; label: string }> = [
+      { key: 'requestDate', label: '요청일' },
+      { key: 'announcementStart', label: '공고시작일' },
+      { key: 'announcementEnd', label: '공고종료일' },
+      { key: 'openingDate', label: '개찰일' },
+      { key: 'contractStart', label: '계약시작일' },
+      { key: 'contractEnd', label: '계약종료일' },
+      { key: 'paymentDate', label: '대금집행일' },
+    ];
+
+    for (const { key, label } of dateFields) {
+      if (input[key] !== undefined) {
+        const newDate = input[key] ? new Date(input[key] as string) : null;
+        const oldDate = contract[key] as Date | null;
+        if (newDate?.getTime() !== oldDate?.getTime()) {
+          updates[key] = newDate;
+          changes.push({
+            action: Action.UPDATE,
+            field: label,
+            from: oldDate?.toISOString().split('T')[0] || null,
+            to: newDate?.toISOString().split('T')[0] || '없음',
+          });
+        }
+      }
+    }
+
+    // 대금집행일 입력 시 자동으로 상태='완료', 단계='집행완료'
+    if (input.paymentDate && input.paymentDate !== contract.paymentDate?.toISOString().split('T')[0]) {
+      if (updates.stage !== '집행완료') {
+        updates.stage = '집행완료';
+        changes.push({
+          action: Action.STAGE,
+          field: '단계',
+          from: contract.stage,
+          to: '집행완료',
+        });
+      }
+      if (updates.status !== Status.COMPLETED) {
+        updates.status = Status.COMPLETED;
+        changes.push({
+          action: Action.STATUS,
+          field: '상태',
+          from: contract.status,
+          to: Status.COMPLETED,
         });
       }
     }

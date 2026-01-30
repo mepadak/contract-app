@@ -55,12 +55,14 @@ export function ChatContainer({ messages, isLoading, className, onQuickAction }:
           <EmptyState onQuickAction={handleQuickAction} />
         ) : (
           <>
-            {messages.map((message) => (
+            {messages.map((message, index) => (
               <MessageBubble
                 key={message.id}
                 role={message.role}
                 content={message.content}
                 timestamp={message.createdAt}
+                isLastMessage={index === messages.length - 1}
+                onQuickReply={handleQuickAction}
               />
             ))}
 

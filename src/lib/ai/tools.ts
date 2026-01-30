@@ -110,17 +110,23 @@ export const contractTools = {
       title: z.string().describe('계약명'),
       category: z.string().describe('계약 종류 (물품, 용역, 공사 등)'),
       method: z.string().describe('계약 방법 (일반경쟁, 수의계약 등)'),
-      amount: z.string().optional().describe('계약 금액 (예: 5천만원, 5억)'),
+      amount: z.string().optional().describe('계약 금액 (예: 5천만원, 5억) - 하위호환용'),
+      budget: z.string().optional().describe('예산 금액 (예: 5천만원, 5억)'),
+      contractAmount: z.string().optional().describe('계약금액 (예: 4천만원)'),
       requester: z.string().optional().describe('요청 부서'),
       deadline: z.string().optional().describe('마감일 (YYYY-MM-DD 형식)'),
+      requestDate: z.string().optional().describe('요청일 (YYYY-MM-DD 형식)'),
+      contractEnd: z.string().optional().describe('계약종료일 (YYYY-MM-DD 형식)'),
     }),
-    execute: async ({ title, category, method, amount, requester, deadline }) => {
+    execute: async ({ title, category, method, amount, budget, contractAmount, requester, deadline, requestDate, contractEnd }) => {
       try {
         const contractId = await generateContractId();
         const mappedCategory = mapCategory(category);
         const mappedMethod = mapMethod(method);
         const initialStage = getInitialStage(mappedMethod);
         const parsedAmount = amount ? (parseKoreanAmount(amount) ?? 0) : 0;
+        const parsedBudget = budget ? (parseKoreanAmount(budget) ?? 0) : 0;
+        const parsedContractAmount = contractAmount ? (parseKoreanAmount(contractAmount) ?? 0) : 0;
 
         const contract = await prisma.contract.create({
           data: {
@@ -129,8 +135,12 @@ export const contractTools = {
             category: mappedCategory,
             method: mappedMethod,
             amount: BigInt(parsedAmount),
+            budget: BigInt(parsedBudget),
+            contractAmount: BigInt(parsedContractAmount),
             requester: requester || null,
             deadline: deadline ? new Date(deadline) : null,
+            requestDate: requestDate ? new Date(requestDate) : null,
+            contractEnd: contractEnd ? new Date(contractEnd) : null,
             stage: initialStage,
             status: Status.BEFORE_START,
           },
@@ -160,10 +170,16 @@ export const contractTools = {
             method: getMethodLabel(mappedMethod),
             amount: parsedAmount,
             amountFormatted: formatAmountShort(parsedAmount),
+            budget: parsedBudget,
+            budgetFormatted: formatAmountShort(parsedBudget),
+            contractAmount: parsedContractAmount,
+            contractAmountFormatted: formatAmountShort(parsedContractAmount),
             stage: initialStage,
             status: '시작 전',
             requester: contract.requester,
             deadline: contract.deadline?.toISOString().split('T')[0],
+            requestDate: contract.requestDate?.toISOString().split('T')[0],
+            contractEnd: contract.contractEnd?.toISOString().split('T')[0],
           },
           message: `계약 ${contract.id}이(가) 생성되었습니다.`,
         };
@@ -322,15 +338,19 @@ export const contractTools = {
 
   // 계약 수정 (단계, 상태, 계약상대방 등)
   updateContract: tool({
-    description: '계약 정보를 수정합니다. 단계, 상태, 계약상대방 등을 변경할 수 있습니다.',
+    description: '계약 정보를 수정합니다. 단계, 상태, 계약상대방, 금액, 일자 등을 변경할 수 있습니다.',
     inputSchema: z.object({
       contractId: z.string().describe('계약 ID'),
       stage: z.string().optional().describe('변경할 단계'),
       status: z.string().optional().describe('변경할 상태'),
       contractor: z.string().optional().describe('계약상대방'),
-      amount: z.string().optional().describe('금액 변경'),
+      amount: z.string().optional().describe('금액 변경 (하위호환)'),
+      budget: z.string().optional().describe('예산 변경'),
+      contractAmount: z.string().optional().describe('계약금액 변경'),
+      executionAmount: z.string().optional().describe('집행금액 변경'),
+      paymentDate: z.string().optional().describe('대금집행일 (YYYY-MM-DD 형식) - 입력 시 자동 완료 처리'),
     }),
-    execute: async ({ contractId, stage, status, contractor, amount }) => {
+    execute: async ({ contractId, stage, status, contractor, amount, budget, contractAmount, executionAmount, paymentDate }) => {
       try {
         const contract = await prisma.contract.findFirst({
           where: {
@@ -396,6 +416,51 @@ export const contractTools = {
             from: formatAmountShort(Number(contract.amount)),
             to: formatAmountShort(parsedAmount)
           });
+        }
+
+        if (budget) {
+          const parsedBudget = parseKoreanAmount(budget) ?? 0;
+          updates.budget = BigInt(parsedBudget);
+          changes.push({
+            field: '예산',
+            from: formatAmountShort(Number(contract.budget)),
+            to: formatAmountShort(parsedBudget)
+          });
+        }
+
+        if (contractAmount) {
+          const parsedContractAmount = parseKoreanAmount(contractAmount) ?? 0;
+          updates.contractAmount = BigInt(parsedContractAmount);
+          changes.push({
+            field: '계약금액',
+            from: formatAmountShort(Number(contract.contractAmount)),
+            to: formatAmountShort(parsedContractAmount)
+          });
+        }
+
+        if (executionAmount) {
+          const parsedExecutionAmount = parseKoreanAmount(executionAmount) ?? 0;
+          updates.executionAmount = BigInt(parsedExecutionAmount);
+          changes.push({
+            field: '집행금액',
+            from: formatAmountShort(Number(contract.executionAmount)),
+            to: formatAmountShort(parsedExecutionAmount)
+          });
+        }
+
+        // 대금집행일 입력 시 자동 완료 처리
+        if (paymentDate) {
+          updates.paymentDate = new Date(paymentDate);
+          changes.push({
+            field: '대금집행일',
+            from: contract.paymentDate?.toISOString().split('T')[0] || '없음',
+            to: paymentDate
+          });
+          // 자동으로 상태='완료', 단계='집행완료' 변경
+          updates.stage = '집행완료';
+          updates.status = Status.COMPLETED;
+          changes.push({ field: '단계', from: contract.stage, to: '집행완료' });
+          changes.push({ field: '상태', from: contract.status, to: '완료' });
         }
 
         if (Object.keys(updates).length === 0) {

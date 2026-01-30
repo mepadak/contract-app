@@ -16,9 +16,25 @@ model Contract {
   requester        String?
   requesterContact String?   @map("requester_contact")
   budgetYear       Int       @default(2026) @map("budget_year")
-  amount           BigInt    @default(0)
+
+  // 금액 필드 (기존 amount 유지 + 신규 필드)
+  amount           BigInt    @default(0)           // 하위호환용 (기존 데이터)
+  budget           BigInt    @default(0)           // 예산
+  contractAmount   BigInt    @default(0) @map("contract_amount")  // 계약금액
+  executionAmount  BigInt    @default(0) @map("execution_amount") // 집행금액
+
   contractor       String?
   deadline         DateTime? @db.Date
+
+  // 일자 필드 (신규)
+  requestDate        DateTime? @db.Date @map("request_date")        // 요청일
+  announcementStart  DateTime? @db.Date @map("announcement_start")  // 공고시작일
+  announcementEnd    DateTime? @db.Date @map("announcement_end")    // 공고종료일
+  openingDate        DateTime? @db.Date @map("opening_date")        // 개찰일
+  contractStart      DateTime? @db.Date @map("contract_start")      // 계약시작일
+  contractEnd        DateTime? @db.Date @map("contract_end")        // 계약종료일
+  paymentDate        DateTime? @db.Date @map("payment_date")        // 대금집행일
+
   status           Status    @default(BEFORE_START)
   stage            String    @default("공고준비")
   createdAt        DateTime  @default(now()) @map("created_at")

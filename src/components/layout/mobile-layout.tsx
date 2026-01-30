@@ -27,7 +27,7 @@ export function MobileLayout({
       <main
         className={`
           flex-1 overflow-auto
-          ${showNav ? 'pb-20' : ''}
+          ${showNav ? 'pb-[calc(5rem+env(safe-area-inset-bottom))]' : ''}
           ${showHeader ? '' : 'pt-safe'}
         `}
       >

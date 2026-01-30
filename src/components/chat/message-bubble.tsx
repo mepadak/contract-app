@@ -2,16 +2,24 @@
 
 import { cn } from '@/lib/utils';
 import { Bot, User } from 'lucide-react';
+import { QuickReplyButtons, parseQuickReplyOptions } from './quick-reply-buttons';
 
 interface MessageBubbleProps {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: Date;
   isStreaming?: boolean;
+  isLastMessage?: boolean;
+  onQuickReply?: (value: string) => void;
 }
 
-export function MessageBubble({ role, content, timestamp, isStreaming }: MessageBubbleProps) {
+export function MessageBubble({ role, content, timestamp, isStreaming, isLastMessage, onQuickReply }: MessageBubbleProps) {
   const isUser = role === 'user';
+
+  // 어시스턴트 마지막 메시지에서 퀵 리플라이 옵션 파싱
+  const quickReplyOptions = !isUser && isLastMessage && !isStreaming
+    ? parseQuickReplyOptions(content)
+    : [];
 
   return (
     <div
@@ -56,6 +64,14 @@ export function MessageBubble({ role, content, timestamp, isStreaming }: Message
             </span>
           )}
         </div>
+
+        {/* Quick Reply Buttons */}
+        {quickReplyOptions.length > 0 && onQuickReply && (
+          <QuickReplyButtons
+            options={quickReplyOptions}
+            onSelect={onQuickReply}
+          />
+        )}
 
         {/* Timestamp */}
         {timestamp && (

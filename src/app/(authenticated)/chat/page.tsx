@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { useChat } from '@ai-sdk/react';
 import { ChatContainer } from '@/components/chat/chat-container';
 import { ChatInput } from '@/components/chat/chat-input';
+import { useChatPersistence } from '@/hooks/useChatPersistence';
 
 // AI SDK 6.x UIMessage에서 텍스트 추출 헬퍼
 function extractTextContent(parts: Array<{ type: string; text?: string }>): string {
@@ -13,10 +15,31 @@ function extractTextContent(parts: Array<{ type: string; text?: string }>): stri
 }
 
 export default function ChatPage() {
-  // AI SDK 6.x: api 옵션 제거 (기본값 '/api/chat' 사용)
-  const { messages, sendMessage, status } = useChat();
+  const { saveMessages, loadMessages } = useChatPersistence();
+  const isInitializedRef = useRef(false);
+
+  // AI SDK 6.x: useChat 훅
+  const { messages, sendMessage, status, setMessages } = useChat();
 
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  // 초기화 시 저장된 메시지 복원 (한 번만 실행)
+  useEffect(() => {
+    if (!isInitializedRef.current && typeof window !== 'undefined') {
+      isInitializedRef.current = true;
+      const savedMessages = loadMessages();
+      if (savedMessages.length > 0) {
+        setMessages(savedMessages);
+      }
+    }
+  }, [loadMessages, setMessages]);
+
+  // 메시지 변경 시 저장
+  useEffect(() => {
+    if (messages.length > 0 && isInitializedRef.current) {
+      saveMessages(messages);
+    }
+  }, [messages, saveMessages]);
 
   // 메시지 변환: AI SDK 6.x UIMessage → 컴포넌트 형식
   const formattedMessages = messages.map((m) => ({

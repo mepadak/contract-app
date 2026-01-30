@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { cn, getDDay, formatDDay } from '@/lib/utils';
-import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS } from '@/lib/constants';
-import { X, Calendar, Building2, Coins, FileText, Clock, MessageSquare, History, Tag } from 'lucide-react';
+import { STATUS_COLORS, STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS, STAGE_COLORS } from '@/lib/constants';
+import { X, Calendar, Building2, Coins, FileText, Clock, MessageSquare, History, Tag, CalendarDays, Pencil } from 'lucide-react';
 import type { Status, Category, Method, Action } from '@prisma/client';
+import { AmountSummary } from './amount-summary';
+import { DateTimeline } from './date-timeline';
+import { ContractEditForm, type ContractEditData } from './contract-edit-form';
 
 interface Note {
   id: number;
@@ -26,17 +30,39 @@ interface ContractDetail {
   title: string;
   category: Category;
   method: Method;
+  // 금액 정보
   amount: number;
   amountFormatted: string;
+  budget?: number;
+  budgetFormatted?: string;
+  contractAmount?: number;
+  contractAmountFormatted?: string;
+  executionAmount?: number;
+  executionAmountFormatted?: string;
+  contractBalance?: number;
+  contractBalanceFormatted?: string;
+  executionBalance?: number;
+  executionBalanceFormatted?: string;
+  // 상태 정보
   status: Status;
   stage: string;
   progress: number;
   stages: string[];
+  // 관련 정보
   requester: string | null;
   requesterContact: string | null;
   contractor: string | null;
-  deadline: string | null;
   budgetYear: number;
+  // 일자 정보
+  deadline: string | null;
+  requestDate?: string | null;
+  announcementStart?: string | null;
+  announcementEnd?: string | null;
+  openingDate?: string | null;
+  contractStart?: string | null;
+  contractEnd?: string | null;
+  paymentDate?: string | null;
+  // 시스템 정보
   createdAt: string;
   updatedAt: string;
 }
@@ -47,6 +73,7 @@ interface ContractDetailModalProps {
   history: HistoryItem[];
   isOpen: boolean;
   onClose: () => void;
+  onRefresh?: () => void; // 저장 후 목록 새로고침
 }
 
 export function ContractDetailModal({
@@ -55,7 +82,10 @@ export function ContractDetailModal({
   history,
   isOpen,
   onClose,
+  onRefresh,
 }: ContractDetailModalProps) {
+  const [isEditMode, setIsEditMode] = useState(false);
+
   if (!isOpen) return null;
 
   const statusColor = STATUS_COLORS[contract.status] || 'gray';
@@ -64,6 +94,23 @@ export function ContractDetailModal({
   const methodLabel = METHOD_LABELS[contract.method] || contract.method;
 
   const dDay = contract.deadline ? getDDay(new Date(contract.deadline)) : null;
+
+  // 저장 핸들러
+  const handleSave = async (data: ContractEditData) => {
+    const response = await fetch(`/api/contracts/${contract.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || '저장에 실패했습니다.');
+    }
+
+    setIsEditMode(false);
+    onRefresh?.();
+  };
 
   return (
     <div className="fixed inset-0 z-50">
@@ -89,45 +136,93 @@ export function ContractDetailModal({
             </div>
             <h2 className="text-lg font-semibold text-text-primary truncate">{contract.title}</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 -mr-2 text-text-tertiary hover:text-text-primary transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {!isEditMode && (
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="p-2 text-text-tertiary hover:text-accent-primary transition-colors"
+                title="수정"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setIsEditMode(false);
+                onClose();
+              }}
+              className="p-2 -mr-2 text-text-tertiary hover:text-text-primary transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* 스크롤 영역 */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-5 space-y-6">
-            {/* 진행률 */}
+            {/* 수정 모드 */}
+            {isEditMode ? (
+              <ContractEditForm
+                initialData={{
+                  title: contract.title,
+                  category: contract.category,
+                  method: contract.method,
+                  status: contract.status,
+                  stage: contract.stage,
+                  stages: contract.stages,
+                  budget: contract.budget,
+                  contractAmount: contract.contractAmount,
+                  executionAmount: contract.executionAmount,
+                  requester: contract.requester,
+                  contractor: contract.contractor,
+                  deadline: contract.deadline,
+                  requestDate: contract.requestDate,
+                  announcementStart: contract.announcementStart,
+                  announcementEnd: contract.announcementEnd,
+                  openingDate: contract.openingDate,
+                  contractStart: contract.contractStart,
+                  contractEnd: contract.contractEnd,
+                  paymentDate: contract.paymentDate,
+                }}
+                onSave={handleSave}
+                onCancel={() => setIsEditMode(false)}
+              />
+            ) : (
+            <>
+            {/* 진행 현황 */}
             <section>
               <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 진행 현황
               </h3>
               <div className="bg-surface-secondary rounded-xl p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-text-primary">{contract.stage}</span>
-                  <span className="text-sm text-accent-primary font-medium">{contract.progress}%</span>
+                {/* 현재 단계 배지 */}
+                <div className="mb-4">
+                  <StageBadge stage={contract.stage} />
                 </div>
-                <div className="h-2 bg-surface-tertiary rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full transition-all duration-500',
-                      contract.progress === 100 ? 'bg-emerald-500' : 'bg-accent-primary'
-                    )}
-                    style={{ width: `${contract.progress}%` }}
-                  />
-                </div>
-                {/* 단계 표시 */}
-                <div className="flex justify-between mt-3 text-[10px] text-text-tertiary">
-                  {contract.stages.slice(0, 4).map((s, i) => (
-                    <span key={i} className={cn(contract.stage === s && 'text-accent-primary font-medium')}>
-                      {s}
-                    </span>
-                  ))}
-                  {contract.stages.length > 4 && <span>...</span>}
+                {/* 전체 단계 표시 */}
+                <div className="flex flex-wrap gap-2">
+                  {contract.stages.map((s, i) => {
+                    const currentIndex = contract.stages.indexOf(contract.stage);
+                    const isPast = i < currentIndex;
+                    const isCurrent = s === contract.stage;
+                    const stageColor = STAGE_COLORS[s] || 'gray';
+
+                    return (
+                      <span
+                        key={i}
+                        className={cn(
+                          'text-[10px] px-2 py-1 rounded-md',
+                          isCurrent && getStageColorClass(stageColor),
+                          isPast && 'bg-emerald-50 text-emerald-600',
+                          !isCurrent && !isPast && 'bg-gray-50 text-gray-400'
+                        )}
+                      >
+                        {s}
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             </section>
@@ -141,7 +236,7 @@ export function ContractDetailModal({
               <div className="grid grid-cols-2 gap-3">
                 <InfoCard icon={FileText} label="종류" value={categoryLabel} />
                 <InfoCard icon={Building2} label="방법" value={methodLabel} />
-                <InfoCard icon={Coins} label="금액" value={contract.amountFormatted} />
+                <InfoCard icon={Calendar} label="예산연도" value={`${contract.budgetYear}년`} />
                 <InfoCard
                   icon={Calendar}
                   label="마감일"
@@ -150,6 +245,46 @@ export function ContractDetailModal({
                   badgeType={dDay !== null && dDay < 0 ? 'danger' : dDay !== null && dDay <= 7 ? 'warning' : 'default'}
                 />
               </div>
+            </section>
+
+            {/* 금액 현황 */}
+            <section>
+              <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2">
+                <Coins className="w-4 h-4" />
+                금액 현황
+              </h3>
+              <AmountSummary
+                budget={contract.budget ?? 0}
+                budgetFormatted={contract.budgetFormatted ?? '0원'}
+                contractAmount={contract.contractAmount ?? 0}
+                contractAmountFormatted={contract.contractAmountFormatted ?? '0원'}
+                executionAmount={contract.executionAmount ?? 0}
+                executionAmountFormatted={contract.executionAmountFormatted ?? '0원'}
+                contractBalance={contract.contractBalance ?? 0}
+                contractBalanceFormatted={contract.contractBalanceFormatted ?? '0원'}
+                executionBalance={contract.executionBalance ?? 0}
+                executionBalanceFormatted={contract.executionBalanceFormatted ?? '0원'}
+                amount={contract.amount}
+                amountFormatted={contract.amountFormatted}
+              />
+            </section>
+
+            {/* 일정 */}
+            <section>
+              <h3 className="text-sm font-medium text-text-secondary mb-3 flex items-center gap-2">
+                <CalendarDays className="w-4 h-4" />
+                일정
+              </h3>
+              <DateTimeline
+                requestDate={contract.requestDate ?? null}
+                announcementStart={contract.announcementStart ?? null}
+                announcementEnd={contract.announcementEnd ?? null}
+                openingDate={contract.openingDate ?? null}
+                contractStart={contract.contractStart ?? null}
+                contractEnd={contract.contractEnd ?? null}
+                paymentDate={contract.paymentDate ?? null}
+                deadline={contract.deadline}
+              />
             </section>
 
             {/* 관련 정보 */}
@@ -238,6 +373,16 @@ export function ContractDetailModal({
                 </div>
               </section>
             )}
+
+            {/* 생성/수정일 */}
+            <div className="pt-4 border-t border-surface-tertiary">
+              <div className="flex justify-between text-xs text-text-tertiary">
+                <span>생성: {new Date(contract.createdAt).toLocaleDateString('ko-KR')}</span>
+                <span>수정: {new Date(contract.updatedAt).toLocaleDateString('ko-KR')}</span>
+              </div>
+            </div>
+            </>
+            )}
           </div>
         </div>
       </div>
@@ -260,6 +405,48 @@ function StatusBadge({ color, label }: { color: string; label: string }) {
       {label}
     </span>
   );
+}
+
+// 단계 배지
+function StageBadge({ stage }: { stage: string }) {
+  const stageColor = STAGE_COLORS[stage] || 'gray';
+
+  const colorClasses: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-700 border-slate-200',
+    blue: 'bg-blue-100 text-blue-700 border-blue-200',
+    indigo: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    violet: 'bg-violet-100 text-violet-700 border-violet-200',
+    amber: 'bg-amber-100 text-amber-700 border-amber-200',
+    orange: 'bg-orange-100 text-orange-700 border-orange-200',
+    emerald: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    gray: 'bg-gray-100 text-gray-700 border-gray-200',
+  };
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center text-sm font-medium px-3 py-1.5 rounded-lg border',
+        colorClasses[stageColor] || colorClasses.gray
+      )}
+    >
+      {stage}
+    </span>
+  );
+}
+
+// 단계 색상 클래스 반환
+function getStageColorClass(color: string): string {
+  const colorClasses: Record<string, string> = {
+    slate: 'bg-slate-100 text-slate-600',
+    blue: 'bg-blue-100 text-blue-600',
+    indigo: 'bg-indigo-100 text-indigo-600',
+    violet: 'bg-violet-100 text-violet-600',
+    amber: 'bg-amber-100 text-amber-600',
+    orange: 'bg-orange-100 text-orange-600',
+    emerald: 'bg-emerald-100 text-emerald-600',
+    gray: 'bg-gray-100 text-gray-600',
+  };
+  return colorClasses[color] || colorClasses.gray;
 }
 
 // 정보 카드

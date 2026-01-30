@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, FileText, RefreshCw, SlidersHorizontal, X, Check } from 'lucide-react';
+import { Search, FileText, RefreshCw, SlidersHorizontal, X, Check, List, FolderTree } from 'lucide-react';
 import { ContractCard, ContractCardSkeleton } from '@/components/contract/contract-card';
 import { ContractDetailModal } from '@/components/contract/contract-detail-modal';
+import { ContractTree } from '@/components/contract/contract-tree';
 import { cn } from '@/lib/utils';
 import { STATUS_LABELS, CATEGORY_LABELS, METHOD_LABELS } from '@/lib/constants';
 import type { Status, Category, Method, Action } from '@prisma/client';
@@ -97,6 +98,9 @@ export default function ContractsPage() {
   const [selectedNotes, setSelectedNotes] = useState<Note[]>([]);
   const [selectedHistory, setSelectedHistory] = useState<HistoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 뷰 모드 (list / tree)
+  const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
 
   // 활성 필터 개수
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
@@ -215,6 +219,19 @@ export default function ContractsPage() {
           </button>
           <button
             type="button"
+            onClick={() => setViewMode(viewMode === 'list' ? 'tree' : 'list')}
+            className={cn(
+              'flex h-10 w-10 items-center justify-center rounded-xl border transition-all',
+              viewMode === 'tree'
+                ? 'bg-accent-50 border-accent-200 text-accent-600'
+                : 'bg-surface-secondary border-surface-tertiary text-text-tertiary hover:text-text-primary hover:border-accent-primary/30'
+            )}
+            title={viewMode === 'list' ? '부서별 그룹' : '목록 보기'}
+          >
+            {viewMode === 'list' ? <FolderTree className="h-4 w-4" /> : <List className="h-4 w-4" />}
+          </button>
+          <button
+            type="button"
             onClick={() => fetchContracts()}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-secondary border border-surface-tertiary text-text-tertiary hover:text-text-primary hover:border-accent-primary/30 transition-all"
           >
@@ -305,15 +322,22 @@ export default function ContractsPage() {
           </div>
         ) : (
           // 계약 목록
-          <div className="p-4 space-y-3 pb-24">
+          <div className="p-4 space-y-3">
             <p className="text-xs text-text-tertiary mb-2">총 {contracts.length}건</p>
-            {contracts.map((contract) => (
-              <ContractCard
-                key={contract.id}
-                {...contract}
-                onClick={() => fetchContractDetail(contract.id)}
+            {viewMode === 'tree' ? (
+              <ContractTree
+                contracts={contracts}
+                onContractClick={fetchContractDetail}
               />
-            ))}
+            ) : (
+              contracts.map((contract) => (
+                <ContractCard
+                  key={contract.id}
+                  {...contract}
+                  onClick={() => fetchContractDetail(contract.id)}
+                />
+              ))
+            )}
           </div>
         )}
       </div>
@@ -328,6 +352,13 @@ export default function ContractsPage() {
           onClose={() => {
             setIsModalOpen(false);
             setSelectedContract(null);
+          }}
+          onRefresh={() => {
+            fetchContracts();
+            // 현재 선택된 계약 다시 조회
+            if (selectedContract) {
+              fetchContractDetail(selectedContract.id);
+            }
           }}
         />
       )}
