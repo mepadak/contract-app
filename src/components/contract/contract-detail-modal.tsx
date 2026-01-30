@@ -159,8 +159,8 @@ export function ContractDetailModal({
         </div>
 
         {/* 스크롤 영역 */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-5 space-y-6">
+        <div className="flex-1 overflow-y-auto pb-safe">
+          <div className="p-5 pb-24 space-y-6">
             {/* 수정 모드 */}
             {isEditMode ? (
               <ContractEditForm

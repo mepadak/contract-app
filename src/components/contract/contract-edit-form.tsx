@@ -333,7 +333,7 @@ export function ContractEditForm({
       </section>
 
       {/* 버튼 */}
-      <div className="flex gap-3 pt-4 border-t border-surface-tertiary">
+      <div className="flex gap-3 pt-4 pb-4 border-t border-surface-tertiary">
         <button
           type="button"
           onClick={onCancel}
